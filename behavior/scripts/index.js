@@ -36,9 +36,13 @@ exports.handle = (client) => {
   })
 
   client.runFlow({
+    classifications:{
+      start:'test/start'
+    },
     streams: {
-      main: 'nameAndConfirmUser',
+      start: collectUser,
       collectName: [collectUser],
+      main:"collectUser",
       nameAndConfirmUser: ['collectName', confirmUser]
     }
   })
