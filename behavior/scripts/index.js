@@ -42,8 +42,8 @@ exports.handle = (client) => {
       start_test:'start_test'
     },
     streams: {
-      start_test: [collectUser, confirmUser]
-      main:'start_test',
+      start_test: [collectUser, confirmUser],
+      main:'start_test'
     }
   })
 }
