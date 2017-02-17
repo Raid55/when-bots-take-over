@@ -31,8 +31,9 @@ exports.handle = (client) => {
     prompt() {
       client.addResponse('say_name', {
         user: client.getConversationState().name,
-      }
+      })
       client.done()
+    }
   })
 
   client.runFlow({
