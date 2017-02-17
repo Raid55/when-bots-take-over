@@ -8,7 +8,7 @@ exports.handle = (client) => {
 
       if (user) {
         client.updateConversationState({
-          user: user,
+          name: user,
         })
         console.log(user);
       }
@@ -30,8 +30,8 @@ exports.handle = (client) => {
     },
 
     prompt() {
-      client.addResponse('say_name', {
-        user: client.getConversationState().name,
+      client.addResponse('print_name', {
+        name: client.getConversationState().name,
       })
       client.done()
     }
