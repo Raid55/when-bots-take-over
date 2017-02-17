@@ -2,48 +2,44 @@
 
 exports.handle = (client) => {
   // Create steps
-  const sayHello = client.createStep({
+  const collectUser = client.createStep({
+    extractInfo() {
+      let user = firstOfEntityRole(client.getMessagePart(), 'user')
+
+      if (user) {
+        client.updateConversationState({
+          user: user,
+        })
+      }
+    },
+
     satisfied() {
-      return Boolean(client.getConversationState().helloSent)
+      return Boolean(client.getConversationState().name)
     },
 
     prompt() {
-      client.addResponse('welcome')
-      client.addResponse('provide/documentation', {
-        documentation_link: 'http://docs.init.ai',
-      })
-      client.addResponse('provide/instructions')
-
-      client.updateConversationState({
-        helloSent: true
-      })
-
+      client.addResponse('prompt_name')
       client.done()
     }
   })
 
-  const untrained = client.createStep({
+  const confirmUser = client.createStep({
     satisfied() {
-      return false
+      return false // This forces the step to be activated
     },
 
     prompt() {
-      client.addResponse('apology/untrained')
+      client.addResponse('say_name', {
+        user: client.getConversationState().name,
       client.done()
     }
   })
 
   client.runFlow({
-    classifications: {
-      // map inbound message classifications to names of streams
-    },
-    autoResponses: {
-      // configure responses to be automatically sent as predicted by the machine learning model
-    },
     streams: {
-      main: 'onboarding',
-      onboarding: [sayHello],
-      end: [untrained],
-    },
+      main: 'nameAndConfirmUser',
+      collectName: [collectUser],
+      nameAndConfirmUser: ['collectName', confirmUser]
+    }
   })
 }
