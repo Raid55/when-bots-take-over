@@ -10,6 +10,7 @@ exports.handle = (client) => {
         client.updateConversationState({
           user: user,
         })
+        console.log(user);
       }
     },
 
@@ -38,13 +39,11 @@ exports.handle = (client) => {
 
   client.runFlow({
     classifications:{
-      start:'test/start'
+      start_test:'start_test'
     },
     streams: {
-      start: collectUser,
-      collectName: [collectUser],
-      main:"collectUser",
-      nameAndConfirmUser: ['collectName', confirmUser]
+      start_test: [collectUser, confirmUser]
+      main:'start_test',
     }
   })
 }
