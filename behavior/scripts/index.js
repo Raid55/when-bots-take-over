@@ -10,15 +10,17 @@ exports.handle = (client) => {
         client.updateConversationState({
           name: user,
         })
-        console.log(user);
+        console.log(client.getConversationState().name);
       }
     },
 
     satisfied() {
+      console.log(client.getConversationState().name);
       return Boolean(client.getConversationState().name)
     },
 
     prompt() {
+      console.log(client.getConversationState().name);
       client.addResponse('prompt_name')
       client.done()
     }
