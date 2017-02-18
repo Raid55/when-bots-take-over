@@ -4,7 +4,10 @@ exports.handle = (client) => {
   // Create steps
   const collectUser = client.createStep({
     extractInfo() {
+      console.log(client.getMessagePart());
       let user = client.getFirstEntityWithRole(client.getMessagePart(), 'name')
+      console.log(user);
+      console.log(client.getFirstEntityWithRole());
 
       if (user) {
         client.updateConversationState({
