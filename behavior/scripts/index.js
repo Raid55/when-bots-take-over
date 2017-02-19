@@ -122,12 +122,12 @@ exports.handle = (client) => {
 
   client.runFlow({
     classifications:{
-      start_test:'start_test'
+      create_profile:'create_profile'
     },
     streams: {
-      start_test: 'ask_for_info',
+      create_profile: 'ask_for_info',
       ask_for_info: [collectUser,collectAddress,collectPhone],
-      main: ['start_test'],
+      main: ['create_profile'],
       end: [beyondMe]
     }
   })
