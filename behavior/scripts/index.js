@@ -7,7 +7,7 @@ exports.handle = (client) => {
       console.log('1 USER',client.getMessagePart());
       let user = client.getFirstEntityWithRole(client.getMessagePart(), 'name')
       console.log('2 USER',user);
-      console.log('3 USER',client.getFirstEntityWithRole());
+      console.log('3 USER',client.getFirstEntityWithRole(client.getMessagePart(), 'name'));
 
       if (user) {
         client.updateConversationState({
@@ -24,8 +24,8 @@ exports.handle = (client) => {
 
     prompt() {
       console.log('5 USER',client.getConversationState().name);
-      client.addResponse('ask_for_info/pharma')
-      client.done()
+      client.addResponse('ask_for_info/pharma');
+      client.done();
     }
   })
 
