@@ -2,6 +2,17 @@
 
 exports.handle = (client) => {
   // Create steps
+  const wait = client.createStep({
+    satisfied() {
+      return false
+    },
+
+    prompt() {
+      client.addResponse('wait');
+      client.done();
+    }
+  })
+
   const collectUser = client.createStep({
     extractInfo() {
       console.log('1 USER',client.getMessagePart());
@@ -28,7 +39,7 @@ exports.handle = (client) => {
       client.addResponse('ask_for_info/pharma');
       client.done();
     }
-  })
+  });
 
   const collectAddress = client.createStep({
     extractInfo() {
@@ -55,7 +66,7 @@ exports.handle = (client) => {
       client.addResponse('ask_for_info/phone')
       client.done()
     }
-  })
+  });
   const collectPhone = client.createStep({
     extractInfo() {
       console.log('1 PHONE',client.getMessagePart());
@@ -81,7 +92,7 @@ exports.handle = (client) => {
       client.addResponse('final_response')
       client.done()
     }
-  })
+  });
   // const collectSwag = client.createStep({
   //   extractInfo() {
   //     console.log('1 swag',client.getMessagePart());
@@ -118,7 +129,7 @@ exports.handle = (client) => {
       client.addResponse('test/end')
       client.done()
     }
-  })
+  });
 
   client.runFlow({
     classifications:{
@@ -126,7 +137,7 @@ exports.handle = (client) => {
     },
     streams: {
       create_profile: 'ask_for_info',
-      ask_for_info: [collectUser,collectAddress,collectPhone],
+      ask_for_info: [wait,collectUser,collectAddress,collectPhone],
       main: ['create_profile'],
       end: [beyondMe]
     }
