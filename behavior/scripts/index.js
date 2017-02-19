@@ -8,7 +8,7 @@ exports.handle = (client) => {
     },
 
     prompt() {
-      client.addResponse('wait');
+      client.addResponse('ask_for_info/name');
       client.done();
     }
   })
@@ -138,6 +138,7 @@ exports.handle = (client) => {
     streams: {
       create_profile: ['ask_for_info','end'],
       ask_for_info: [wait,collectUser,collectAddress,collectPhone],
+      main: 'ask_for_info',
       end: [beyondMe]
     }
   })
