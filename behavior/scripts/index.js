@@ -76,7 +76,7 @@ exports.handle = (client) => {
     },
 
     prompt() {
-      console.log('6 PHONE',client.getConversationState()['phone-number/phone'];
+      console.log('6 PHONE',client.getConversationState()['phone-number/phone']);
       client.addResponse('final_response')
       client.done()
     }
@@ -102,7 +102,7 @@ exports.handle = (client) => {
     },
 
     prompt() {
-      console.log('6 swag',client.getConversationState()['phone-number/phone'];
+      console.log('6 swag',client.getConversationState()['phone-number/phone']);
       client.addResponse('final_response')
       client.done()
     }
