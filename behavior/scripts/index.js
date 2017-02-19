@@ -33,7 +33,7 @@ exports.handle = (client) => {
     extractInfo() {
       console.log('1 ADRESS',client.getMessagePart());
       let pharmaAdress = client.getFirstEntityWithRole(client.getMessagePart(), 'adress')
-      console.log('2 ADRESS',user);
+      console.log('2 ADRESS',pharmaAdress);
       console.log('3 ADRESS',client.getFirstEntityWithRole());
 
       if (pharmaAdress) {
@@ -81,32 +81,32 @@ exports.handle = (client) => {
       client.done()
     }
   })
-  const collectSwag = client.createStep({
-    extractInfo() {
-      console.log('1 swag',client.getMessagePart());
-      let phoneNum = client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone')
-      console.log('2 swag',phoneNum);
-      console.log('3 swag',client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone'));
-
-      if (phoneNum) {
-        client.updateConversationState({
-          'phone-number/phone': phoneNum,
-        })
-        console.log('4 swag',client.getConversationState()['phone-number/phone']);
-      }
-    },
-
-    satisfied() {
-      console.log('5 swag',client.getConversationState()['phone-number/phone']);
-      return Boolean(client.getConversationState()['phone-number/phone'])
-    },
-
-    prompt() {
-      console.log('6 swag',client.getConversationState()['phone-number/phone']);
-      client.addResponse('final_response')
-      client.done()
-    }
-  })
+  // const collectSwag = client.createStep({
+  //   extractInfo() {
+  //     console.log('1 swag',client.getMessagePart());
+  //     let phoneNum = client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone')
+  //     console.log('2 swag',phoneNum);
+  //     console.log('3 swag',client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone'));
+  //
+  //     if (phoneNum) {
+  //       client.updateConversationState({
+  //         'phone-number/phone': phoneNum,
+  //       })
+  //       console.log('4 swag',client.getConversationState()['phone-number/phone']);
+  //     }
+  //   },
+  //
+  //   satisfied() {
+  //     console.log('5 swag',client.getConversationState()['phone-number/phone']);
+  //     return Boolean(client.getConversationState()['phone-number/phone'])
+  //   },
+  //
+  //   prompt() {
+  //     console.log('6 swag',client.getConversationState()['phone-number/phone']);
+  //     client.addResponse('final_response')
+  //     client.done()
+  //   }
+  // })
 
   const beyondMe = client.createStep({
     satisfied() {
