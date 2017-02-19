@@ -136,9 +136,8 @@ exports.handle = (client) => {
       create_profile:'create_profile'
     },
     streams: {
-      create_profile: 'ask_for_info',
+      create_profile: ['ask_for_info','end'],
       ask_for_info: [wait,collectUser,collectAddress,collectPhone],
-      main: ['create_profile'],
       end: [beyondMe]
     }
   })
