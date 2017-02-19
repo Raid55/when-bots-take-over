@@ -13,7 +13,7 @@ exports.handle = (client) => {
         client.updateConversationState({
           name: user,
         })
-        console.log('TESTESTESTES',user;
+        console.log('TESTESTESTES',user);
         console.log('3 USER',client.getConversationState().name);
       }
     },
