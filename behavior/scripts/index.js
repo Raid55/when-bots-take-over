@@ -126,8 +126,8 @@ exports.handle = (client) => {
     streams: {
       start_test: 'ask_for_info',
       ask_for_info: [collectUser,collectAddress,collectPhone],
-      main:'start_test',
-      end: beyondMe
+      main: ['start_test'],
+      end: [beyondMe]
     }
   })
 }
