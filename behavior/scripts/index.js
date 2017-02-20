@@ -27,8 +27,8 @@ exports.handle = (client) => {
 
   function shouldWaitForNurse(state) {
     return (
-      !state.questions
-      || state.needsHuman
+      state.needsHuman
+      || !state.questions
       || state.questions.every(q => !!q.answer)
     );
   }
@@ -104,6 +104,7 @@ exports.handle = (client) => {
   })
 
   const handleRenegadeEvent = function(eventType, payload) {
+    //should be changed to console log
     client.addTextResponse('Received event of type: ' + eventType)
     client.done()
   }
