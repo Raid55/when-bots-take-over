@@ -1,162 +1,119 @@
-'use strict'
+'use strict';
+
+const MIN_CONFIDENCE = 0.15;
 
 exports.handle = (client) => {
+  // Helpers
+  function requireHuman() {
+    client.updateConversationState({
+      needsHuman: true
+    });
+    client.done();
+  }
+
+  function shouldWaitForNurse(state) {
+    return (
+      !state.questions
+      || state.needsHuman
+      || state.questions.every(q => !!q.answer)
+    );
+  }
+
   // Create steps
-  // const wait = client.createStep({
-  //   satisfied() {
-  //     return false
-  //   },
-  //
-  //   prompt() {
-  //     client.addResponse('ask_for_info/name');
-  //     client.done();
-  //   }
-  // })
-
-  const collectUser = client.createStep({
-    extractInfo() {
-      console.log('1 USER',client.getMessagePart());
-      let user = client.getFirstEntityWithRole(client.getMessagePart(), 'name')
-      console.log('2 USER',user);
-      console.log('3 USER',client.getFirstEntityWithRole(client.getMessagePart(), 'name'));
-
-      if (user) {
-        client.updateConversationState({
-          name: user,
-        })
-        console.log('TESTESTESTES',user);
-        console.log('3 USER',client.getConversationState().name);
-      }
-    },
-
+  const waitForNurse = client.createStep({
     satisfied() {
-      console.log('4 USER',client.getConversationState().name);
-      return Boolean(client.getConversationState().name)
+      console.log('should wait?');
+      console.log ('should wait: ', shouldWaitForNurse(client.getConversationState()));
+      return !shouldWaitForNurse(client.getConversationState());
     },
 
     prompt() {
-      console.log('5 USER',client.getConversationState().name);
-      client.addResponse('ask_for_info/name');
-      client.expect(client.getStreamName(),'give/name')
+      if (!client.getConversationState().questions) {
+        /*
+        @ NOTE: THIS PART IS ONLY HERE FOR TESTING!!!
+        Eventually, the questions will be added using an [Inbound Event](https://docs.init.ai/docs/events)
+        */
+        console.log('add questions');
+        client.updateConversationState({
+          questions: /*put array of qs here*/
+        });
+      }
       client.done();
     }
   });
 
-  const collectAddress = client.createStep({
-    extractInfo() {
-      console.log('1 ADRESS',client.getMessagePart());
-      let pharmaAdress = client.getFirstEntityWithRole(client.getMessagePart(), 'adress')
-      console.log('2 ADRESS',pharmaAdress);
-      console.log('3 ADRESS',client.getFirstEntityWithRole());
-
-      if (pharmaAdress) {
-        client.updateConversationState({
-          adress: pharmaAdress,
-        })
-        console.log('4 ADRESS',client.getConversationState().adress);
-      }
-    },
-
+  const askQuestions = client.createStep({
     satisfied() {
-      console.log('5 ADRESS',client.getConversationState().adress);
-      return Boolean(client.getConversationState().adress)
+      console.log('ask questions')
+      return client.getConversationState().questions.every(
+        q => typeof q.answer !== 'undefined'
+      );
     },
 
     prompt() {
-      console.log('6 ADRESS',client.getConversationState().adress);
-      client.addResponse('ask_for_info/pharma')
-      client.expect(client.getStreamName(),'give/pharma')
-      client.done()
-    }
-  });
-  const collectPhone = client.createStep({
-    extractInfo() {
-      console.log('1 PHONE',client.getMessagePart());
-      let phoneNum = client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone')
-      console.log('2 PHONE',phoneNum);
-      console.log('3 PHONE',client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone'));
+      const questions = client.getConversationState().questions;
+      const messagePart = client.getMessagePart();
+      const confidence = messagePart.confidence;
 
-      if (phoneNum) {
-        client.updateConversationState({
-          'phone-number/phone': phoneNum,
-        })
-        console.log('4 PHONE',client.getConversationState()['phone-number/phone']);
+      // If confidence is too low, signal the nurse
+      if (confidence < MIN_CONFIDENCE) {
+        console.log('too low conf', confidence, MIN_CONFIDENCE);
+        requireHuman();
+        return;
       }
-    },
 
-    satisfied() {
-      console.log('5 PHONE',client.getConversationState()['phone-number/phone']);
-      return Boolean(client.getConversationState()['phone-number/phone'])
-    },
+      // Check if we were asking a question
+      const currentQuestion = questions.find(q => q.isAsking);
+      if (currentQuestion) {
+        const baseType = messagePart.classification.base_type.value;
 
-    prompt() {
-      console.log('6 PHONE',client.getConversationState()['phone-number/phone']);
-      client.addResponse('ask_for_info/phone')
-      client.expect(client.getStreamName(),'give/phone')
-      client.done()
-    }
-  });
+        // If we were asking a question, and the answer's classification is unexpected, signal the nurse
+        if (currentQuestion.accept && !currentQuestion.accept.includes(baseType)) {
+          console.log('not accepted', baseType, currentQuestion.accept);
+          requireHuman();
+          return;
+        }
 
-  const endPrint = client.createStep({
-    satisfied(){
-      return false;
-    },
-    prompt() {
-      client.addResponse('test_final_res',{
-        name: client.getConversationState().name,
-        adress: client.getConversationState().adress,
-        country: client.getConversationState().phone
-      })
-      client.done()
+        // If we get here, then we have a satisfactory answer, move on!
+        currentQuestion.isAsking = false;
+        currentQuestion.answer = messagePart.content;
+      }
+
+      // Setup the next question if there is one
+      const nextQuestion = questions.find(q => !q.answer);
+      if (nextQuestion) {
+        nextQuestion.isAsking = true;
+        client.addResponse(`ask_question/${nextQuestion.ask}`);
+      }
+
+      // Update the convo state with any answers / new questions
+      client.updateConversationState({
+        questions:  questions
+      });
+
+      client.done();
     }
   })
-
-  // const collectSwag = client.createStep({
-  //   extractInfo() {
-  //     console.log('1 swag',client.getMessagePart());
-  //     let phoneNum = client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone')
-  //     console.log('2 swag',phoneNum);
-  //     console.log('3 swag',client.getFirstEntityWithRole(client.getMessagePart(), 'phone-number/phone'));
-  //
-  //     if (phoneNum) {
-  //       client.updateConversationState({
-  //         'phone-number/phone': phoneNum,
-  //       })
-  //       console.log('4 swag',client.getConversationState()['phone-number/phone']);
-  //     }
-  //   },
-  //
-  //   satisfied() {
-  //     console.log('5 swag',client.getConversationState()['phone-number/phone']);
-  //     return Boolean(client.getConversationState()['phone-number/phone'])
-  //   },
-  //
-  //   prompt() {
-  //     console.log('6 swag',client.getConversationState()['phone-number/phone']);
-  //     client.addResponse('final_response')
-  //     client.done()
-  //   }
-  // })
-
-  const beyondMe = client.createStep({
-    satisfied() {
-      return false // This forces the step to be activated
-    },
-
-    prompt() {
-      client.addResponse('test/end')
-      client.done()
-    }
-  });
 
   client.runFlow({
-    classifications:{},
+    classifications: {
+      // map inbound message classifications to names of streams
+    },
     streams: {
-      ask_for_info: [collectUser,collectAddress,collectPhone,endPrint],
-      main: 'ask_for_info',
-      end: [beyondMe]
-    }
+      main: 'loop',
+      loop: [waitForNurse, askQuestions]
+    },
   })
 }
-      // ask_about_you:,
-// ,'ask_about_you'
+
+// format of qs
+// [
+//   {
+//     ask: 'do_you_smoke',
+//     accept: ['affirmative', 'decline', 'smoking_answer']
+//   },
+//   {
+//     ask: 'any_medications',
+//     accept: ['affirmative', 'decline', 'medication_answer']
+//   }
+// ]
