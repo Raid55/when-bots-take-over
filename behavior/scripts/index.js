@@ -2,16 +2,16 @@
 
 exports.handle = (client) => {
   // Create steps
-  const wait = client.createStep({
-    satisfied() {
-      return false
-    },
-
-    prompt() {
-      client.addResponse('ask_for_info/name');
-      client.done();
-    }
-  })
+  // const wait = client.createStep({
+  //   satisfied() {
+  //     return false
+  //   },
+  //
+  //   prompt() {
+  //     client.addResponse('ask_for_info/name');
+  //     client.done();
+  //   }
+  // })
 
   const collectUser = client.createStep({
     extractInfo() {
@@ -36,7 +36,8 @@ exports.handle = (client) => {
 
     prompt() {
       console.log('5 USER',client.getConversationState().name);
-      client.addResponse('ask_for_info/pharma');
+      client.addResponse('ask_for_info/name');
+      client.expect(client.getStreamName(),'give/name')
       client.done();
     }
   });
@@ -63,7 +64,8 @@ exports.handle = (client) => {
 
     prompt() {
       console.log('6 ADRESS',client.getConversationState().adress);
-      client.addResponse('ask_for_info/phone')
+      client.addResponse('ask_for_info/pharma')
+      client.expect(client.getStreamName(),'give/pharma')
       client.done()
     }
   });
@@ -89,10 +91,26 @@ exports.handle = (client) => {
 
     prompt() {
       console.log('6 PHONE',client.getConversationState()['phone-number/phone']);
-      client.addResponse('final_response')
+      client.addResponse('ask_for_info/phone')
+      client.expect(client.getStreamName(),'give/phone')
       client.done()
     }
   });
+
+  const endPrint = client.createStep({
+    satisfied(){
+      return false;
+    },
+    prompt() {
+      client.addResponse('test_final_res',{
+        name: client.getConversationState().name,
+        adress: client.getConversationState().adress,
+        country: client.getConversationState().phone
+      })
+      client.done()
+    }
+  })
+
   // const collectSwag = client.createStep({
   //   extractInfo() {
   //     console.log('1 swag',client.getMessagePart());
@@ -132,12 +150,10 @@ exports.handle = (client) => {
   });
 
   client.runFlow({
-    classifications:{
-      create_profile:'create_profile'
-    },
+    classifications:{},
     streams: {
       create_profile: ['ask_for_info','end'],
-      ask_for_info: [wait,collectUser,collectAddress,collectPhone],
+      ask_for_info: [wait,collectUser,collectAddress,collectPhone,endPrint],
       main: 'ask_for_info',
       end: [beyondMe]
     }
