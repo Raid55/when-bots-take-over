@@ -7,4 +7,4 @@ timestamp: 2017-02-19T17:55:39.273080557-05:00
 * ask_question/do_you_smoke
 
 sometimes...
-* do_you_smoke/occasionally
+* occasionally/sometimes

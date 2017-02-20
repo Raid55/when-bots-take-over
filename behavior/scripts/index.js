@@ -2,6 +2,20 @@
 
 const MIN_CONFIDENCE = 0.15;
 
+// format of qs
+// const testQ = [
+//   {
+//     ask: 'do_you_smoke',
+//     accept: ['affirmative', 'decline', 'smoking_answer']
+//   },
+//   {
+//     ask: 'any_medications',
+//     accept: ['affirmative', 'decline', 'medication_answer']
+//   }
+// ];
+
+
+
 exports.handle = (client) => {
   // Helpers
   function requireHuman() {
@@ -29,14 +43,8 @@ exports.handle = (client) => {
 
     prompt() {
       if (!client.getConversationState().questions) {
-        /*
-        @ NOTE: THIS PART IS ONLY HERE FOR TESTING!!!
-        Eventually, the questions will be added using an [Inbound Event](https://docs.init.ai/docs/events)
-        */
-        console.log('add questions');
-        client.updateConversationState({
-          questions: /*put array of qs here*/
-        });
+        console.log('Problems have happeneded, no form for user to fill out');
+        requireHuman();
       }
       client.done();
     }
@@ -95,7 +103,30 @@ exports.handle = (client) => {
     }
   })
 
+  const handleRenegadeEvent = function(eventType, payload) {
+    client.addTextResponse('Received event of type: ' + eventType)
+    client.done()
+  }
+
+  const handleQFormIncoming = function (eventType, payload) {
+    client.updateConversationState({questions: payload.quetions,needsHuman: payload.needsHuman})
+    console.log('form sent to user');
+    client.addTextResponse('I just sent you a form to fill out, is that ok?')
+    client.done()
+  }
+
+  const toggleNeedNurse = function (eventType, payload) {
+    client.updateConversationState({needsHuman: payload.needsHuman})
+    console.log('A Human has solved the problem');
+    client.done()
+  }
+
   client.runFlow({
+    eventHandlers: {
+      '*': handleRenegadeEvent,
+      'incoming:QForm': handleQFormIncoming,
+      'toggleState:needHuman': toggleNeedNurse,
+    },
     classifications: {
       // map inbound message classifications to names of streams
     },
@@ -105,15 +136,3 @@ exports.handle = (client) => {
     },
   })
 }
-
-// format of qs
-// [
-//   {
-//     ask: 'do_you_smoke',
-//     accept: ['affirmative', 'decline', 'smoking_answer']
-//   },
-//   {
-//     ask: 'any_medications',
-//     accept: ['affirmative', 'decline', 'medication_answer']
-//   }
-// ]
