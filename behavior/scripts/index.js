@@ -152,8 +152,7 @@ exports.handle = (client) => {
   client.runFlow({
     classifications:{},
     streams: {
-      create_profile: ['ask_for_info','end'],
-      ask_for_info: [wait,collectUser,collectAddress,collectPhone,endPrint],
+      ask_for_info: [collectUser,collectAddress,collectPhone,endPrint],
       main: 'ask_for_info',
       end: [beyondMe]
     }
