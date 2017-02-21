@@ -14,8 +14,6 @@ const MIN_CONFIDENCE = 0.15;
 //   }
 // ];
 
-
-
 exports.handle = (client) => {
   // Helpers
   function requireHuman() {
@@ -42,10 +40,6 @@ exports.handle = (client) => {
     },
 
     prompt() {
-      if (!client.getConversationState().questions) {
-        console.log('Problems have happeneded, no form for user to fill out');
-        requireHuman();
-      }
       client.done();
     }
   });
@@ -69,10 +63,17 @@ exports.handle = (client) => {
         requireHuman();
         return;
       }
-
-      // Check if we were asking a question
       const currentQuestion = questions.find(q => q.isAsking);
-      if (currentQuestion) {
+      const humanRes = client.getConversationState().humanResponse;
+
+      //check if human responded
+      if (currentQuestion && humanRes != null) {
+        currentQuestion.isAsking = false;
+        currentQuestion.answer = humanRes;
+        client.updateConversationState({humanResponse: null})
+      }
+      //else do tha regular things...
+      else if (currentQuestion) {
         const baseType = messagePart.classification.base_type.value;
 
         // If we were asking a question, and the answer's classification is unexpected, signal the nurse
@@ -85,6 +86,7 @@ exports.handle = (client) => {
         // If we get here, then we have a satisfactory answer, move on!
         currentQuestion.isAsking = false;
         currentQuestion.answer = messagePart.content;
+
       }
 
       // Setup the next question if there is one
@@ -113,12 +115,26 @@ exports.handle = (client) => {
     client.updateConversationState({questions: payload.quetions,needsHuman: payload.needsHuman})
     console.log('form sent to user');
     client.addTextResponse('I just sent you a form to fill out, is that ok?')
-    client.done()
+    client.done();
   }
 
-  const toggleNeedNurse = function (eventType, payload) {
+  const toggleNeedHuman = function (eventType, payload) {
     client.updateConversationState({needsHuman: payload.needsHuman})
     console.log('A Human has solved the problem');
+    client.done()
+  }
+  const humanMessage = function (eventType, payload) {
+    client.addTextResponse(payload.message)
+    console.log('A human message was sent');
+    client.done()
+  }
+  const humanResponse = function (eventType, payload) {
+    client.updateConversationState({
+      needsHuman: payload.needsHuman,
+      humanResponse: payload.humanResponse
+    })
+    askQuestions.prompt()
+    console.log('A human response was submited');
     client.done()
   }
 
@@ -126,7 +142,9 @@ exports.handle = (client) => {
     eventHandlers: {
       '*': handleRenegadeEvent,
       'incoming:QForm': handleQFormIncoming,
-      'toggleState:needHuman': toggleNeedNurse,
+      'incoming:human:message': humanMessage,
+      'incoming:human:response': humanResponse,
+      'toggleState:needHuman': toggleNeedHuman,
     },
     classifications: {
       // map inbound message classifications to names of streams
