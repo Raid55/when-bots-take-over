@@ -40,6 +40,7 @@ exports.handle = (client) => {
     },
 
     prompt() {
+      requireHuman()
       client.done();
     }
   });
@@ -63,14 +64,21 @@ exports.handle = (client) => {
         requireHuman();
         return;
       }
+      console.log(questions.find(q => q.isAsking));
       const currentQuestion = questions.find(q => q.isAsking);
       const humanRes = client.getConversationState().humanResponse;
 
       //check if human responded
       if (currentQuestion && humanRes != null) {
+        const humanResBaseType = humanRes.baseType
         currentQuestion.isAsking = false;
-        currentQuestion.answer = humanRes;
+        currentQuestion.answer = humanRes.text;
         client.updateConversationState({humanResponse: null})
+        if (currentQuestion.accept && !currentQuestion.accept.includes(humanResBaseType)) {
+          console.log('not accepted', humanResBaseType, currentQuestion.accept);
+          requireHuman();
+          return;
+        }
       }
       //else do tha regular things...
       else if (currentQuestion) {
@@ -82,15 +90,13 @@ exports.handle = (client) => {
           requireHuman();
           return;
         }
-
         // If we get here, then we have a satisfactory answer, move on!
         currentQuestion.isAsking = false;
         currentQuestion.answer = messagePart.content;
-
       }
-
       // Setup the next question if there is one
       const nextQuestion = questions.find(q => !q.answer);
+
       if (nextQuestion) {
         nextQuestion.isAsking = true;
         client.addResponse(`ask_question/${nextQuestion.ask}`);
@@ -131,11 +137,13 @@ exports.handle = (client) => {
   const humanResponse = function (eventType, payload) {
     client.updateConversationState({
       needsHuman: payload.needsHuman,
-      humanResponse: payload.humanResponse
+      humanResponse: {
+        text: payload.humanResponse.text,
+        baseType: payload.humanResponse.baseType
+      }
     })
-    askQuestions.prompt()
     console.log('A human response was submited');
-    client.done()
+    askQuestions.prompt()
   }
 
   client.runFlow({
