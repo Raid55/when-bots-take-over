@@ -1,7 +1,6 @@
 'use strict';
 
-const MIN_CONFIDENCE = 0.15;
-
+const MIN_CONFIDENCE = 0.20;
 // format of qs
 // const testQ = [
 //   {
